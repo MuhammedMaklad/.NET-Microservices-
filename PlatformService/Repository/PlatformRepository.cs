@@ -17,7 +17,7 @@ public class PlatformRepository : IPlatformRepository
     var entity = _context.Add(plat);
   }
 
-  public IEnumerable<Platform?> GetAllPlatforms()
+  public IEnumerable<Platform> GetAllPlatforms()
   {
     return _context.Platforms.ToList();
   }
@@ -28,8 +28,7 @@ public class PlatformRepository : IPlatformRepository
   }
 
   public bool SaveChanges()
-  {
-    
+  { 
     return (_context.SaveChanges() > 0);
   }
 }
