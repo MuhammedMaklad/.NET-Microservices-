@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PlatformService.Data;
 using PlatformService.Repository;
 using PlatformService.Seeds;
+using PlatformService.SyncDataServices.Http;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,9 @@ builder.Services.AddScoped<IPlatformRepository, PlatformRepository>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // ! Add Service to container
 builder.Services.AddControllers();
+// ! Add Http Sync Message service
+builder.Services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>();
+
 
 var app = builder.Build();
 

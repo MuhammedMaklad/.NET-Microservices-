@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PlatformService.Dtos;
 using PlatformService.Repository;
 using PlatformService.Models;
+using PlatformService.SyncDataServices.Http;
 
 namespace PlatformService;
 
@@ -13,15 +14,19 @@ public class PlatformController : ControllerBase
   private readonly IPlatformRepository _repository;
   private readonly IMapper _mapper;
   private readonly ILogger<PlatformController> _logger;
+
+  private readonly ICommandDataClient _commandDataClient;
   public PlatformController(
     IPlatformRepository repository,
     IMapper mapper,
-    ILogger<PlatformController> logger
+    ILogger<PlatformController> logger,
+    ICommandDataClient commandDataClient
   )
   {
     _mapper = mapper;
     _repository = repository;
     _logger = logger;
+    _commandDataClient = commandDataClient;
   }
 
   [HttpGet]
@@ -43,7 +48,7 @@ public class PlatformController : ControllerBase
   }
 
   [HttpPost]
-  public ActionResult<ReadPlatformDto> CreatePlatform([FromBody] CreatePlatformDto platformDto)
+  public async Task<ActionResult<ReadPlatformDto>> CreatePlatform([FromBody] CreatePlatformDto platformDto)
   {
     if (!ModelState.IsValid)
       return BadRequest(ModelState);
@@ -53,11 +58,23 @@ public class PlatformController : ControllerBase
     var isSaved = _repository.SaveChanges();
 
     var platformReadDto = _mapper.Map<ReadPlatformDto>(platform);
+
+    try
+    {
+      await _commandDataClient.SendPlatformToCommand(platformReadDto);
+     
+    }
+    catch (Exception ex)
+    {
+      System.Console.WriteLine($"---> Couldn't Send Synchronuslly {ex.Message}");
+    }
+    
     if (isSaved)
       return CreatedAtAction(
             nameof(GetPlatformById),
             new { id = platformReadDto.Id },
             platformReadDto);
+            
     return StatusCode(500, "Failed to create platform");
   }
 }
