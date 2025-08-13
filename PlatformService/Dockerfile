@@ -6,7 +6,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 WORKDIR /App
 # ^ Sets the working directory inside the container to /App
 
-COPY *.csproj ./
+
+COPY PlatformService/PlatformService.csproj ./
 # ^ Copies just the project file(s) first (optimization for layer caching)
 # This allows Docker to cache the restore step when only code changes
 
@@ -14,11 +15,11 @@ RUN dotnet restore
 # ^ Restores NuGet packages (dependencies) for the project
 # Runs only when project files change (thanks to previous COPY optimization)
 
-COPY . ./
+COPY PlatformService/ ./
 # ^ Copies all remaining source code into the container
 # This includes all .cs files, config files, etc.
 
-RUN dotnet publish -c Release -o Out
+RUN dotnet publish PlatformService.csproj -c Release -o Out
 # ^ Builds and publishes the application in Release configuration
 # -c Release: Builds in Release mode (optimized)
 # -o Out: Outputs published files to /App/Out directory
@@ -32,10 +33,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /App
 # ^ Sets working directory in the runtime container
 
-COPY --from=build-env /App/Out .
+COPY --from=build-env /App/Out ./
 # ^ Copies only the published output from the build stage
 # --from=build-env takes files from the previously named build stage
 # Copies from /App/Out in build container to /App in runtime container
+EXPOSE 5093
 
 ENTRYPOINT [ "dotnet", "PlatformService.dll" ]
 # ^ Specifies the command to run when the container starts

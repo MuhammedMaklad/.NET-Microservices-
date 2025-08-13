@@ -1,0 +1,16 @@
+services:
+  platform:
+    container_name: platform-service
+    build:
+      context: .
+      dockerfile: PlatformService/Dockerfile
+      target: build-env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - SQL_SERVER_CONNECTION_STRING=Server=sql-server;Database=PlatformDB;User Id=sa;Password=Pa55w0rd!;
+      - ASPNETCORE_URLS=http://*:5093 # Critical change: * instead of +
+      - DOTNET_USE_POLLING_FILE_WATCHER=1 # For hot reload in dev    # depends_on:
+    #   - serviceName
+    command: ["dotnet", "run"]
+    ports:
+      - "5093:5093"

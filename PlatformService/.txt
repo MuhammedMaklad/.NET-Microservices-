@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  platformService:
+    container_name: platform-service
+    build:
+      context: .
+      dockerfile: PlatformService/Dockerfile
+      target: development
+    environment:
+      - DOTNET_USE_POLLING_FILE_WATCHER=true   # Ensures file changes trigger reload
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - DOTNET_HOST_PATH=/usr/share/dotnet
+      - DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5093           # Single source of truth for the port
+      - SQL_SERVER_CONNECTION_STRING=Server=sql-server;Database=PlatformDB;User Id=sa;Password=Pa55w0rd!;
+    volumes:
+      - ./PlatformService:/App                  # Mount source for hot reload
+      - /App/bin                                 # Avoid overwriting compiled files
+      - /App/obj
+    command: ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://+:5093"]
+    ports:
+      - "5093:5093"
+    depends_on:
+      - sql-server
