@@ -14,3 +14,16 @@ services:
     command: ["dotnet", "run"]
     ports:
       - "5093:5093"
+  commands:
+    container_name: commands-service
+    build:
+      context: .
+      dockerfile: CommandsService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - SQL_SERVER_CONNECTION_STRING=Server=sql-server;Database=PlatformDB;User Id=sa;Password=Pa55w0rd!;
+      - ASPNETCORE_URLS=http://*:5237 # Critical change: * instead of +
+      - DOTNET_USE_POLLING_FILE_WATCHER=1 # For hot reload in dev    # depends_on:
+    command: ["dotnet", "run"]
+    ports:
+      - "5237:5237"

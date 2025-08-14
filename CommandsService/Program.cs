@@ -19,4 +19,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapControllers();
 
+app.MapGet("/", () =>
+{
+    return "Muhammed on da code, From Command Service";
+});
+
 app.Run();
