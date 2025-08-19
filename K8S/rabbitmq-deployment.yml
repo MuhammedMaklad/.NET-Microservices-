@@ -1,0 +1,82 @@
+# --- DEPLOYMENT SECTION ---
+# Defines the blueprint for the RabbitMQ pod(s).
+# API group and version for Deployment resources.
+apiVersion: apps/v1
+# The type of Kubernetes object we are creating.
+kind: Deployment
+# Metadata about the Deployment object itself.
+metadata:
+  # The name of this Deployment. Use `kubectl get deployments` to see this.
+  name: rabbitmq-depl
+# The specification that describes the desired state of the Deployment.
+spec:
+  # Number of identical pod replicas to run. 1 is standard for stateful services like message queues.
+  replicas: 1
+  # Label selector: tells the Deployment how to find which pods it manages.
+  selector:
+    matchLabels:
+      # Any pod with the label `app: rabbitmq` will be considered part of this Deployment.
+      app: rabbitmq
+  # The template for creating the actual Pods.
+  template:
+    # Metadata for the pods that will be created.
+    metadata:
+      # Labels attached to the pod. The Deployment's selector uses these to manage the pod.
+      labels:
+        app: rabbitmq
+    # The specification of the pod itself.
+    spec:
+      # List of containers that will run inside the pod.
+      containers:
+      - name: rabbitmq # A friendly name for the container.
+        # The Docker image to use. '3-management' includes the RabbitMQ management plugin UI.
+        image: rabbitmq:3-management
+        # The ports that the container exposes. This is mostly informational.
+        ports:
+        - containerPort: 15672 # Port for the management web UI and API.
+          name: rbmq-mgmt-port # A named port for easier reference within the cluster.
+        - containerPort: 5672 # Default port for AMQP protocol traffic (for producers/consumers).
+          name: rbmq-msg-port # A named port for easier reference.
+---
+# --- INTERNAL CLUSTERIP SERVICE SECTION ---
+# Creates a stable network interface INSIDE the cluster for other pods to connect to RabbitMQ.
+apiVersion: v1
+kind: Service # A Service provides network access to a set of pods.
+metadata:
+  name: rabbitmq-clusterip-srv # The internal DNS name for this service will be this.
+spec:
+  type: ClusterIP # The default type. This service is only accessible from within the cluster.
+  selector:
+    app: rabbitmq # This service targets all pods with this label (our RabbitMQ pod).
+  ports:
+  - name: rbmq-mgmt-port
+    protocol: TCP
+    port: 15672 # The port this service will listen on internally.
+    targetPort: 15672 # The port on the target pod to forward traffic to.
+  - name: rbmq-msg-port
+    protocol: TCP
+    port: 5672 # The port this service will listen on internally.
+    targetPort: 5672 # The port on the target pod to forward traffic to.
+---
+# --- EXTERNAL LOADBALANCER SERVICE SECTION ---
+# Creates an external public IP to access RabbitMQ from OUTSIDE the cluster (e.g., your local machine).
+# WARNING: Exposing messaging queues and management UIs publicly is a security risk.
+# In production, consider using `kubectl port-forward` or an Ingress controller with auth instead.
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-loadbalancer # Name of the LoadBalancer service object.
+spec:
+  type: LoadBalancer # This type tells the cloud provider to provision an external load balancer and public IP.
+  selector:
+    app: rabbitmq # Targets our RabbitMQ pods.
+  ports:
+  - name: rbmq-mgmt-port
+    protocol: TCP
+    port: 15672 # The port the external load balancer will listen on.
+    targetPort: 15672 # The port on the pod to forward traffic to.
+  - name: rbmq-msg-port
+    protocol: TCP
+    port: 5672 # The port the external load balancer will listen on.
+    targetPort: 5672 # The port on the pod to forward traffic to.
+  # (Optional) You could add `externalTrafficPolicy: Local` for better client IP preservation.

@@ -1,0 +1,69 @@
+# * This file defines three distinct Kubernetes resources to deploy a Microsoft SQL Server instance, make it accessible within the cluster, and expose it to the outside world
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mssql-deployment
+  labels:
+    app: mssql-deploy
+spec:
+  replicas: 1 # run only 1 pod
+  selector:
+    matchLabels:
+      app: mssql # the deployment manages pods with this label
+  template:
+    # the pod template that the deployment will use to create pods
+    metadata:
+      labels:
+        app: mssql # the crucial label links the pod to the deployment and services
+    spec:
+      containers:
+      - name: microsoft-sql-server
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+        - containerPort: 1433
+        env:
+        - name: MSSQL_PID
+          value: "Express"
+        - name: ACCEPT_EULA
+          value: "Y"
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mssql
+              key: SA_PASSWORD
+        volumeMounts:
+        # Where to mount the persistent storage in the container
+        - name: mssqldb # must match the volume define below
+          mountPath: /var/opt/mssql/data # The directory where SQL server stores database
+      volumes:
+      - name: mssqldb
+        persistentVolumeClaim:
+          claimName: mssql-claim
+---
+# * This service creates a stable internal DNS name and IP address for the SQL Server pods within the Kubernetes cluster. Other pods in the cluster use this service to connect to the database
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql-clusterip-srv # name of this service object
+spec:
+  type: ClusterIP # the default type. make service available only inside cluster
+  selector:
+    app: mssql # this service target any pod with the label 'app: mssql' 
+  ports:
+  - port: 1433 # the port this service listens on
+    targetPort: 1433 # the port on the target pod to forward traffic to
+    protocol: TCP
+    name: mssql # name for this port definition
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql-loadbalancer
+spec:
+  type: LoadBalancer
+  selector:
+    app: mssql # target the same SQL server Pods
+  ports:
+  - port: 1433
+    targetPort: 1433
+    protocol: TCP
