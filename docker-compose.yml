@@ -27,3 +27,18 @@ services:
     command: ["dotnet", "run"]
     ports:
       - "5237:5237"
+  sql-server-db:
+    container_name: my-sql-server
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong(!)Password1
+      - MSSQL_PID=Developer
+    ports:
+     - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Mount init script
+    restart: unless-stopped
+volumes:
+  sqlserver_data:
