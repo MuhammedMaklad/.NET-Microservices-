@@ -27,6 +27,17 @@ services:
     command: ["dotnet", "run"]
     ports:
       - "5237:5237"
+  
+  rabbit-mq:
+    container_name: rabbitMq
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672" # Management UI port
+      - "5672:5672" # AMQP protocol port
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=password123
+      - RABBITMQ_DEFAULT_VHOST=/
   sql-server-db:
     container_name: my-sql-server
     image: mcr.microsoft.com/mssql/server:2022-latest

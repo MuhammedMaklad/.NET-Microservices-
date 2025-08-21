@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using PlatformService.AsyncDataServices.MessageBroker;
+using PlatformService.AsyncDataServices.MessageBroker.Services;
 using PlatformService.Data;
 using PlatformService.Repository;
 using PlatformService.Seeds;
@@ -30,7 +32,11 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddControllers();
 // ! Add Http Sync Message service
 builder.Services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>();
+// ! Add Message Bus Async Message Service
+builder.Services.AddSingleton(typeof(IRabbitMQPublisher<>), typeof(RabbitMQPublisher<>));
 
+// ! map rabbit mq settings
+builder.Services.Configure<RabbitMQSetting>(builder.Configuration.GetSection("RabbitMQ"));
 
 var app = builder.Build();
 

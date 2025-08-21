@@ -10,5 +10,6 @@ public class PlatformProfile : Profile
   {
     CreateMap<Platform, ReadPlatformDto>().ReverseMap();
     CreateMap<CreatePlatformDto, Platform>().ReverseMap();
+    CreateMap<ReadPlatformDto, PlatformPublishDto>().ReverseMap();
   }
 }
