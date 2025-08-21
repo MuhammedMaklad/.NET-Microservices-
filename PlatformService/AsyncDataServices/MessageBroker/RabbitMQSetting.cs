@@ -11,7 +11,7 @@ namespace PlatformService.AsyncDataServices.MessageBroker
   //RabbitMQ Queue name
   public static class RabbitMQQueues
   {
-    public const string OrderValidationQueue = "orderValidationQueue";
+    public const string CreatePlatformQueue = "createPlatformQueue";
     public const string AnotherQueue = "anotherQueue";
     public const string ThirdQueue = "thirdQueue";
   }

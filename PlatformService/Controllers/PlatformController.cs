@@ -5,6 +5,7 @@ using PlatformService.Repository;
 using PlatformService.Models;
 using PlatformService.SyncDataServices.Http;
 using PlatformService.AsyncDataServices.MessageBroker.Services;
+using PlatformService.AsyncDataServices.MessageBroker;
 
 namespace PlatformService;
 
@@ -52,7 +53,7 @@ public class PlatformController : ControllerBase
   }
 
   [HttpPost("/Create/Http", Name = "SyncMessageUsingHttp")]
-  public async Task<ActionResult<ReadPlatformDto>> CreatePlatform([FromBody] CreatePlatformDto platformDto)
+  public async Task<ActionResult<ReadPlatformDto>> CreatePlatformV1([FromBody] CreatePlatformDto platformDto)
   {
     if (!ModelState.IsValid)
       return BadRequest(ModelState);
@@ -66,11 +67,10 @@ public class PlatformController : ControllerBase
     try
     {
       await _commandDataClient.SendPlatformToCommand(platformReadDto);
-
     }
     catch (Exception ex)
     {
-      System.Console.WriteLine($"---> Couldn't Send Synchronuslly {ex.Message}");
+      System.Console.WriteLine($"---> Couldn't Send Synchronously {ex.Message}");
     }
 
     if (isSaved)
@@ -82,7 +82,7 @@ public class PlatformController : ControllerBase
     return StatusCode(500, "Failed to create platform");
   }
   [HttpPost("/Create/MessageBus", Name = "AsyncMessageUsingRabbitMq")]
-  public async Task<ActionResult<ReadPlatformDto>> CreatePlaform([FromBody] CreatePlatformDto platformDto)
+  public async Task<ActionResult<ReadPlatformDto>> CreatePlatformV2([FromBody] CreatePlatformDto platformDto)
   {
     if (!ModelState.IsValid)
       return BadRequest(ModelState);
@@ -94,6 +94,14 @@ public class PlatformController : ControllerBase
     var platformReadDto = _mapper.Map<ReadPlatformDto>(platform);
     var publishPlatformDto = _mapper.Map<PlatformPublishDto>(platformReadDto);
 
-    await _rabbitMQPublisher.PublishMessageAsync(publishPlatformDto, )
+    publishPlatformDto.Event = "Platform-Publish";
+
+    await _rabbitMQPublisher.PublishMessageAsync(publishPlatformDto, RabbitMQQueues.CreatePlatformQueue);
+
+    if (isSaved)
+      return Ok(platformReadDto);
+
+    return StatusCode(500, "Failed to create platform");
   }
+
 }
