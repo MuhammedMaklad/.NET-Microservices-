@@ -27,6 +27,8 @@ public class RabbitMQPublisher<T> : IRabbitMQPublisher<T>, IDisposable
       {
         HostName = _rabbitMqSetting.RabbitMQHost,
         Port = Convert.ToInt32(_rabbitMqSetting.RabbitMQPort),
+        UserName = _rabbitMqSetting.RabbitMQUsername,    // Add this
+        Password = _rabbitMqSetting.RabbitMQPassword,    // Add this
         // Consider adding these for better reliability
         AutomaticRecoveryEnabled = true,
         NetworkRecoveryInterval = TimeSpan.FromSeconds(10)

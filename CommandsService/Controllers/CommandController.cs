@@ -44,7 +44,7 @@ namespace CommandsService.Controllers
       return Ok(_mapper.Map<CommandReadDto>(command));
     }
 
-    [HttpPost("{platformId:int}", Name = "CreateCommandForPlatform")]
+    [HttpPost(Name = "CreateCommandForPlatform")]
     public ActionResult<CommandReadDto> CreateCommand(int platformId, CommandCreateDto commandCreateDto)
     {
       if (!ModelState.IsValid)

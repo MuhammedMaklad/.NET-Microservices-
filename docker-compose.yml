@@ -7,49 +7,93 @@ services:
       target: build-env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - SQL_SERVER_CONNECTION_STRING=Server=sql-server;Database=PlatformDB;User Id=sa;Password=Pa55w0rd!;
-      - ASPNETCORE_URLS=http://*:5093 # Critical change: * instead of +
-      - DOTNET_USE_POLLING_FILE_WATCHER=1 # For hot reload in dev    # depends_on:
-    #   - serviceName
-    command: ["dotnet", "run"]
+      - ASPNETCORE_URLS=http://*:5093
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+    volumes:
+      - ./PlatformService:/App
+    command: dotnet watch run --urls http://*:5093
     ports:
       - "5093:5093"
+    depends_on:
+      # sql-server-db:
+      #   condition: service_healthy
+      rabbit-mq:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - dotnet-microservices
+
   commands:
     container_name: commands-service
+    hostname: commandsService
     build:
       context: .
       dockerfile: CommandsService/Dockerfile
+      target: build-env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - SQL_SERVER_CONNECTION_STRING=Server=sql-server;Database=PlatformDB;User Id=sa;Password=Pa55w0rd!;
-      - ASPNETCORE_URLS=http://*:5237 # Critical change: * instead of +
-      - DOTNET_USE_POLLING_FILE_WATCHER=1 # For hot reload in dev    # depends_on:
-    command: ["dotnet", "run"]
+      - ASPNETCORE_URLS=http://*:5237
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+    command: dotnet watch run --urls http://*:5237
     ports:
       - "5237:5237"
-  
-  rabbit-mq:
-    container_name: rabbitMq
-    image: rabbitmq:3-management
-    ports:
-      - "15672:15672" # Management UI port
-      - "5672:5672" # AMQP protocol port
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=password123
-      - RABBITMQ_DEFAULT_VHOST=/
-  sql-server-db:
-    container_name: my-sql-server
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=YourStrong(!)Password1
-      - MSSQL_PID=Developer
-    ports:
-     - "1433:1433"
     volumes:
-      - sqlserver_data:/var/opt/mssql
-      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Mount init script
-    restart: unless-stopped
+      - ./CommandsService:/App
+    depends_on:
+      # sql-server-db:
+      #   condition: service_healthy
+      rabbit-mq:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - dotnet-microservices
+
+  rabbit-mq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    hostname: rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+    networks:
+      - dotnet-microservices
+
+  # sql-server-db:
+  #   container_name: my-sql-server
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   hostname: sql1
+  #   environment:
+  #     - ACCEPT_EULA=Y
+  #     - MSSQL_SA_PASSWORD=Password@123
+  #     - MSSQL_PID=Developer
+  #   ports:
+  #     - "1433:1433"
+  #   volumes:
+  #     - sqlserver_data:/var/opt/mssql
+  #   healthcheck:
+  #     test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Password@123", "-Q", "SELECT 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #   restart: always
+  #   networks:
+  #     - dotnet-microservices
+
 volumes:
-  sqlserver_data:
+  # sqlserver_data:
+  rabbitmq_data:
+
+networks:
+  dotnet-microservices:
+    driver: bridge

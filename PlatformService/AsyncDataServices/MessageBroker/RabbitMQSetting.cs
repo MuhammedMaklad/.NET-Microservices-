@@ -4,8 +4,8 @@ namespace PlatformService.AsyncDataServices.MessageBroker
   {
     public string? RabbitMQHost { get; set; }
     public string? RabbitMQPort { get; set; }
-    public string? UserName { get; set; }
-    public string? Password { get; set; }
+    public string? RabbitMQUsername { get; set; }
+    public string? RabbitMQPassword { get; set; }
   }
 
   //RabbitMQ Queue name

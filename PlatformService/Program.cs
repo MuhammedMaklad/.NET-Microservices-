@@ -21,8 +21,8 @@ builder.Services.AddSwaggerGen();
 
 // ! Add DbContext
 builder.Services.AddDbContext<AppDbContext>(
-    // options => options.UseInMemoryDatabase("InMem")
-    options => options.UseSqlServer(builder.Configuration.GetConnectionString("PlatformURI"))
+    options => options.UseInMemoryDatabase("InMem")
+    // options => options.UseSqlServer(builder.Configuration.GetConnectionString("PlatformURI"))
 );
 // ! Add Platform repo
 builder.Services.AddScoped<IPlatformRepository, PlatformRepository>();
