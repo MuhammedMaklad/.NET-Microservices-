@@ -1,5 +1,7 @@
 using CommandsService;
+using CommandsService.AsyncDataServices.MessageBroker;
 using CommandsService.Data;
+using CommandsService.EventProcessing;
 using CommandsService.Repository;
 using CommandsService.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +33,7 @@ try
     builder.Services.AddSwaggerGen();
     builder.Services.AddControllers();
 
-    // ! Add Db
+    // ! Add Db 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
         // options.UseSqlServer(builder.Configuration.GetConnectionString("CommandDbURI"));
@@ -41,7 +43,16 @@ try
     // ! Add Auto Mapper
     builder.Services.AddAutoMapper(typeof(MappingProfiles));
 
+    // ! Add Singleton life time for Event Processor Service
+    builder.Services.AddSingleton<IEventProcessor, EventProcessor>();
+    // ! Add Scope life time for Command Repository
     builder.Services.AddScoped<ICommandRepository, CommandRepository>();
+
+    // ! map Rabbit mq setting from app-settings
+    builder.Services.Configure<RabbitMQSettings>(configuration.GetSection("RabbitMQ"));
+
+    // ! 
+    builder.Services.AddHostedService<MessageBusSubscriber>();
 
     var app = builder.Build();
 

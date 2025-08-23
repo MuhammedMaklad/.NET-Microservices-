@@ -11,5 +11,9 @@ public class MappingProfiles: Profile
     CreateMap<PlatformReadDto, Platform>().ReverseMap();
     CreateMap<CommandCreateDto, Command>().ReverseMap();
     CreateMap<CommandReadDto, Platform>().ReverseMap();
+    CreateMap<PlatformPublishDto, Platform>()
+    .ForMember(dest => dest.ExternalId, opt => opt.MapFrom(
+      src => src.Id
+    ));
   }
 } 

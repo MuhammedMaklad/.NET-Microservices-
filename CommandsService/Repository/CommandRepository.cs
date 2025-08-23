@@ -41,6 +41,10 @@ public class CommandRepository : ICommandRepository
   {
     return _context.Platforms.FirstOrDefault(x => x.Id == platformId) is not null;
   }
+  public bool ExternalPlatformExist(int externalPlatformId)
+  {
+    return _context.Platforms.FirstOrDefault(x => x.ExternalId == externalPlatformId) is not null;
+  }
 
   public bool saveChanges()
   {
