@@ -53,7 +53,7 @@ public class EventProcessor : IEventProcessor
     
     switch (eventType?.Event)
     {
-      case "Platform_Published":
+      case "Platform-Publish":
         _logger.LogInformation($"Platform Published Event Detect {EventType.PlatformPublished}");
         return EventType.PlatformPublished;
       default:

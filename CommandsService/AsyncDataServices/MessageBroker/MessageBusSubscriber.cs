@@ -46,7 +46,7 @@ public class MessageBusSubscriber : BackgroundService
     _channel = _connection.CreateModel(); // Create channel
 
     // Declare a fanout exchange named "trigger"
-    _channel.ExchangeDeclare(exchange: "trigger", type: ExchangeType.Fanout);
+    _channel.ExchangeDeclare(exchange: "trigger", type: ExchangeType.Fanout, durable:true);
 
     // Declare a queue and get the generated queue name
     _queueName = _channel.QueueDeclare().QueueName;

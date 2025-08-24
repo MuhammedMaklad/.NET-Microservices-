@@ -96,7 +96,14 @@ public class PlatformController : ControllerBase
 
     publishPlatformDto.Event = "Platform-Publish";
 
-    await _rabbitMQPublisher.PublishMessageAsync(publishPlatformDto, RabbitMQQueues.CreatePlatformQueue);
+    try
+    {
+      await _rabbitMQPublisher.PublishMessageAsync(publishPlatformDto, RabbitMQQueues.CreatePlatformQueue);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError($"Error while Publish Platform To Message Bus {ex.Message}");
+    }
 
     if (isSaved)
       return Ok(platformReadDto);

@@ -4,6 +4,7 @@ using PlatformService.AsyncDataServices.MessageBroker.Services;
 using PlatformService.Data;
 using PlatformService.Repository;
 using PlatformService.Seeds;
+using PlatformService.SyncDataServices.Grpc;
 using PlatformService.SyncDataServices.Http;
 
 
@@ -38,6 +39,9 @@ builder.Services.AddSingleton(typeof(IRabbitMQPublisher<>), typeof(RabbitMQPubli
 // ! map rabbit mq settings
 builder.Services.Configure<RabbitMQSetting>(builder.Configuration.GetSection("RabbitMQ"));
 
+// ! Register grpc
+builder.Services.AddGrpc();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -46,6 +50,25 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Configure the HTTP request pipeline (middleware)
+app.UseHttpsRedirection();
+app.MapControllers();
+
+// ? add end point for grpc
+app.MapGrpcService<GrpcPlatformService>();
+if (builder.Environment.IsDevelopment())
+{
+    // to enable refection for types exist in grpc
+    // builder.Services.AddGrpcReflection();
+}
+if (app.Environment.IsDevelopment())
+{
+    // to enable refection for types exist in grpc
+    // builder.Services.AddGrpcReflection();
+    // app.MapGrpcReflectionService();
+}
+
 // ? seed data
 PrepDb.PrepPopulation(app, app.Environment.IsProduction());
 
@@ -54,10 +77,11 @@ app.MapGet("/", () =>
     return "Hello World from Coupon API!, Muhammed on da code ";
 });
 
-// Configure the HTTP request pipeline (middleware)
-app.UseHttpsRedirection();
-app.MapControllers();
-
+app.MapGet("/protos/platformModels.proto", async context =>
+{
+    context.Response.ContentType = "text/plain"; // or "application/protobuf"
+    await context.Response.WriteAsync(File.ReadAllText("Protos/platformModels.proto"));
+});
 
 app.Run();
 

@@ -4,6 +4,7 @@ using CommandsService.Data;
 using CommandsService.EventProcessing;
 using CommandsService.Repository;
 using CommandsService.Repository.IRepository;
+using CommandsService.SyncDataServices.Grpc;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -51,8 +52,11 @@ try
     // ! map Rabbit mq setting from app-settings
     builder.Services.Configure<RabbitMQSettings>(configuration.GetSection("RabbitMQ"));
 
-    // ! 
+    // ! add message bus
     builder.Services.AddHostedService<MessageBusSubscriber>();
+
+    // ! Add Grpc service
+    builder.Services.AddScoped<IPlatformDataClient, PlatformDataClient>();
 
     var app = builder.Build();
 
@@ -76,7 +80,11 @@ try
         return "Muhammed on da code, From Command Service";
     });
 
+    PrepDb.PrepPopulation(app);
+    
     app.Run();
+
+
 }
 catch (System.Exception ex)
 {
